@@ -1,0 +1,13 @@
+// $Id$
+// vim:ft=javascript
+
+// If your extension references something external, use ARG_WITH
+// ARG_WITH("locktools", "for locktools support", "no");
+
+// Otherwise, use ARG_ENABLE
+// ARG_ENABLE("locktools", "enable locktools support", "no");
+
+if (PHP_LOCKTOOLS != "no") {
+	EXTENSION("locktools", "locktools.c");
+}
+
