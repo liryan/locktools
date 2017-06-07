@@ -26,6 +26,7 @@
 #include "php_ini.h"
 #include "ext/standard/info.h"
 #include "php_locktools.h"
+#include "lock.h"
 
 /* If you declare any globals in php_locktools.h uncomment this:
 ZEND_DECLARE_MODULE_GLOBALS(locktools)
@@ -48,12 +49,18 @@ PHP_METHOD(LockTools,run)
     zval *retval_ptr=NULL;
     zend_fcall_info fci;
     zend_fcall_info_cache fci_cache;
-    if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,"sf*",&name,&name_len,&fci,&fci_cache,&fci.params,&fci.param_count)==FAILURE){
+    int timeout=1000;
+    if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,"sf*l",&name,&name_len,&fci,&fci_cache,&fci.params,&fci.param_count,&timeout)==FAILURE){
         return;
     }
-    fci.retval_ptr_ptr=&retval_ptr;
-    zend_call_function(&fci,&fci_cache TSRMLS_CC);
-    printf("ok %s\n",name);
+    if(1==lock(name,timeout)){
+        fci.retval_ptr_ptr=&retval_ptr;
+        zend_call_function(&fci,&fci_cache TSRMLS_CC);
+        unlock();
+    }
+    else{
+        php_log_err("unlock" TSRMLS_CC);   
+    }
 }
 
 /* {{{ PHP_INI
@@ -127,6 +134,7 @@ PHP_MSHUTDOWN_FUNCTION(locktools)
 	/* uncomment this line if you have INI entries
 	UNREGISTER_INI_ENTRIES();
 	*/
+    unlock();
 	return SUCCESS;
 }
 /* }}} */
@@ -136,6 +144,7 @@ PHP_MSHUTDOWN_FUNCTION(locktools)
  */
 PHP_RINIT_FUNCTION(locktools)
 {
+    unlock();
 	return SUCCESS;
 }
 /* }}} */

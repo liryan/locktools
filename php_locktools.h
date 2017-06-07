@@ -22,6 +22,7 @@
 #define PHP_LOCKTOOLS_H
 
 extern zend_module_entry locktools_module_entry;
+
 #define phpext_locktools_ptr &locktools_module_entry
 
 #define PHP_LOCKTOOLS_VERSION "0.1.0" /* Replace with version number for your extension */
@@ -68,10 +69,10 @@ zend_class_entry *lock_tools_ce;
 
 PHP_METHOD(LockTools,run);
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_run,0,0,1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_run,0,0,3)
     ZEND_ARG_INFO(0,name)
     ZEND_ARG_INFO(0,callback)
-    ZEND_ARG_INFO(0,zval_args)
+    ZEND_ARG_INFO(0,timeout)
 ZEND_END_ARG_INFO()
 
 #endif	/* PHP_LOCKTOOLS_H */
