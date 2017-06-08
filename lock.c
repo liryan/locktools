@@ -29,7 +29,18 @@ int lock(const char* name,int second_wait)
     {
         while(count-- >=0){
             if(-1==sem_trywait(sem_ptr)){
-                usleep(100); 
+                if(errno==EAGAIN){ //has been locked
+                    usleep(100); 
+                }
+                else if(errno==EDEADLK){ 
+                    
+                }
+                else if(errno==EINTR){
+
+                }
+                else if(errno==EINVAL){
+
+                }
             }
             else{
                 return 1;
