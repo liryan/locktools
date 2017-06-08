@@ -26,6 +26,7 @@
 #include "php_ini.h"
 #include "ext/standard/info.h"
 #include "php_locktools.h"
+#include "locktools.h"
 #include "lock.h"
 
 /* If you declare any globals in php_locktools.h uncomment this:
@@ -46,20 +47,33 @@ PHP_METHOD(LockTools,run)
 {
     char *name=NULL;
     size_t name_len;
-    zval *retval_ptr=NULL;
+	zval*  retval_ptr=NULL;
     zend_fcall_info fci;
     zend_fcall_info_cache fci_cache;
     int timeout=1000;
     if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,"sf*l",&name,&name_len,&fci,&fci_cache,&fci.params,&fci.param_count,&timeout)==FAILURE){
         return;
     }
-    if(1==lock(name,timeout)){
-        fci.retval_ptr_ptr=&retval_ptr;
-        zend_call_function(&fci,&fci_cache TSRMLS_CC);
+
+	int result=lock(name,timeout);
+	printf("lock return %d\n",result);
+    if(0==result){
+		fci.retval_ptr_ptr=&retval_ptr;
+		if(SUCCESS!=zend_call_function(&fci,&fci_cache TSRMLS_CC)){
+			error_log(64,"call user function is error");   
+		}
+		else{
+			if(return_value_used){
+				*return_value = *retval_ptr;
+				zval_copy_ctor(return_value);
+			}
+			zval_ptr_dtor(&retval_ptr);
+		}
         unlock();
     }
     else{
-        php_log_err("unlock" TSRMLS_CC);   
+        error_log(64,"unlock %s","can't lock it");   
+		zend_throw_exception_ex(NULL,0 TSRMLS_CC,"can't lock it name is %s ,ERRORNO:%d",name,result);
     }
 }
 
@@ -120,9 +134,10 @@ PHP_MINIT_FUNCTION(locktools)
 	REGISTER_INI_ENTRIES();
 	*/
     zend_class_entry ce;
-    INIT_CLASS_ENTRY(ce,"LockTools",locktools_methods);
+    INIT_NS_CLASS_ENTRY(ce,"EasySys","LockTools",locktools_methods);
     lock_tools_ce=zend_register_internal_class(&ce);
     zend_declare_property_null(lock_tools_ce,"version",sizeof("version")-1,ZEND_ACC_PUBLIC);
+	php_log_err("extension has start" TSRMLS_CC);
 	return SUCCESS;
 }
 /* }}} */
@@ -134,6 +149,7 @@ PHP_MSHUTDOWN_FUNCTION(locktools)
 	/* uncomment this line if you have INI entries
 	UNREGISTER_INI_ENTRIES();
 	*/
+	php_log_err("extension has stop" TSRMLS_CC);
     unlock();
 	return SUCCESS;
 }
@@ -144,6 +160,7 @@ PHP_MSHUTDOWN_FUNCTION(locktools)
  */
 PHP_RINIT_FUNCTION(locktools)
 {
+	php_log_err("recv new request" TSRMLS_CC);
     unlock();
 	return SUCCESS;
 }
@@ -154,6 +171,7 @@ PHP_RINIT_FUNCTION(locktools)
  */
 PHP_RSHUTDOWN_FUNCTION(locktools)
 {
+	php_log_err("close request" TSRMLS_CC);
 	return SUCCESS;
 }
 /* }}} */

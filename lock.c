@@ -14,9 +14,11 @@
 #include <errno.h>
 sem_t* sem_ptr=NULL;
 char* sem_name=NULL;
+int islocking=0;
 
 int lock(const char* name,int second_wait)
 {
+    islocking=0;
     int count=second_wait*10;
     umask(S_IWGRP | S_IWOTH);
     sem_ptr=sem_open(name,O_CREAT,0644,1);
@@ -30,36 +32,53 @@ int lock(const char* name,int second_wait)
         while(count-- >=0){
             if(-1==sem_trywait(sem_ptr)){
                 if(errno==EAGAIN){ //has been locked
+                    printf("can't lock error has locked\n");
                     usleep(100); 
                 }
                 else if(errno==EDEADLK){ 
-                    
+                    printf("can't lock error EDEADLK\n");
+                    return 2; 
                 }
                 else if(errno==EINTR){
-
+                    printf("can't lock error EINTR\n");
+                    return 3;
                 }
                 else if(errno==EINVAL){
-
+                    printf("can't lock error EINVAL\n");
+                    return 4;
+                }
+                else{
+                    printf("can't lock error UNKOWN\n");
                 }
             }
             else{
-                return 1;
+                islocking=1;
+                return 0;
             }
         }
-        return 0;
+        return 1;
     }
 }
 
+/**
+ * release a lock
+ */
 void unlock()
 {
+    int ret=-1;
     if(sem_ptr!=NULL){
-        sem_post(sem_ptr);
-        sem_close(sem_ptr);
+        if(islocking==1){
+            ret=sem_post(sem_ptr);
+            printf("post sem %d\n",ret);
+        }
+        ret=sem_close(sem_ptr);
+        printf("close sem %d\n",ret);
         sem_ptr=NULL;
     }
 
     if(sem_name!=NULL){
-        sem_unlink(sem_name);
+        ret=sem_unlink(sem_name);
+        printf("unlink sem %d\n",ret);
         sem_name=NULL;
     }
 }
