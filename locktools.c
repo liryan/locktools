@@ -54,27 +54,24 @@ PHP_METHOD(LockTools,run)
     if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,"sf*l",&name,&name_len,&fci,&fci_cache,&fci.params,&fci.param_count,&timeout)==FAILURE){
         return;
     }
-
-	int result=lock(name,timeout);
-	printf("lock return %d\n",result);
-    if(0==result){
+    int result=-1;
+    result=lock(name,timeout);
+    if(result==0){
 		fci.retval_ptr_ptr=&retval_ptr;
 		if(SUCCESS!=zend_call_function(&fci,&fci_cache TSRMLS_CC)){
-			error_log(64,"call user function is error");   
+            return;
 		}
-		else{
-			if(return_value_used){
-				*return_value = *retval_ptr;
-				zval_copy_ctor(return_value);
-			}
-			zval_ptr_dtor(&retval_ptr);
-		}
-        unlock();
+        else{
+            *return_value = *retval_ptr;
+            zval_copy_ctor(return_value);
+            zval_ptr_dtor(&retval_ptr);
+        }
     }
     else{
-        error_log(64,"unlock %s","can't lock it");   
 		zend_throw_exception_ex(NULL,0 TSRMLS_CC,"can't lock it name is %s ,ERRORNO:%d",name,result);
     }
+    unlock();
+    return;
 }
 
 /* {{{ PHP_INI

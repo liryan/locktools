@@ -3,7 +3,8 @@
  * email canbetter@163.com
  */
 
-#include<lock.h>
+#include "php.h"
+#include <lock.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -22,9 +23,10 @@ int lock(const char* name,int second_wait)
     int count=second_wait*10;
     umask(S_IWGRP | S_IWOTH);
     sem_ptr=sem_open(name,O_CREAT,0644,1);
+    sem_name=name;
     if(sem_ptr==SEM_FAILED)
     {
-        printf("create sem failed %s\n",(const char*)strerror(errno));
+        php_log_err("open semphore failed" TSRMLS_CC);
         return 0;
     }
     else
@@ -32,23 +34,19 @@ int lock(const char* name,int second_wait)
         while(count-- >=0){
             if(-1==sem_trywait(sem_ptr)){
                 if(errno==EAGAIN){ //has been locked
-                    printf("can't lock error has locked\n");
                     usleep(100); 
                 }
                 else if(errno==EDEADLK){ 
-                    printf("can't lock error EDEADLK\n");
                     return 2; 
                 }
                 else if(errno==EINTR){
-                    printf("can't lock error EINTR\n");
                     return 3;
                 }
                 else if(errno==EINVAL){
-                    printf("can't lock error EINVAL\n");
                     return 4;
                 }
                 else{
-                    printf("can't lock error UNKOWN\n");
+                    return 5;
                 }
             }
             else{
@@ -71,9 +69,6 @@ void unlock()
             ret=sem_post(sem_ptr);
             printf("post sem %d\n",ret);
         }
-        ret=sem_close(sem_ptr);
-        printf("close sem %d\n",ret);
-        sem_ptr=NULL;
     }
 
     if(sem_name!=NULL){
@@ -81,4 +76,11 @@ void unlock()
         printf("unlink sem %d\n",ret);
         sem_name=NULL;
     }
+
+    if(sem_ptr!=NULL){
+        ret=sem_close(sem_ptr);
+        printf("close sem %d\n",ret);
+        sem_ptr=NULL;
+    }
+
 }
