@@ -14,7 +14,7 @@
 #include <semaphore.h>
 #include <errno.h>
 sem_t* sem_ptr=NULL;
-char* sem_name=NULL;
+const char* sem_name=NULL;
 int islocking=0;
 
 int lock(const char* name,int second_wait)

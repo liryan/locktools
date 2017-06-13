@@ -65,18 +65,7 @@ ZEND_END_MODULE_GLOBALS(locktools)
 #define LOCKTOOLS_G(v) (locktools_globals.v)
 #endif
 
-zend_class_entry *lock_tools_ce;
-
-PHP_METHOD(LockTools,run);
-
-ZEND_BEGIN_ARG_INFO_EX(arginfo_run,0,1,3)
-    ZEND_ARG_INFO(0,name)
-    ZEND_ARG_INFO(0,callback)
-    ZEND_ARG_INFO(0,timeout)
-ZEND_END_ARG_INFO()
-
 #endif	/* PHP_LOCKTOOLS_H */
-
 
 /*
  * Local variables:

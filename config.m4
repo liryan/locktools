@@ -58,6 +58,6 @@ if test "$PHP_LOCKTOOLS" != "no"; then
   dnl ])
   dnl
   dnl PHP_SUBST(LOCKTOOLS_SHARED_LIBADD)
-  lock_tools_source="locktools.c lock.c"
+  lock_tools_source="main.c locktools.c lock.c"
   PHP_NEW_EXTENSION(locktools, $lock_tools_source, $ext_shared)
 fi
